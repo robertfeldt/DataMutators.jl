@@ -6,5 +6,6 @@ else
 end
 
 using DataShrinkers
+using GodelTest
 
 include("test_array_shrinker.jl")

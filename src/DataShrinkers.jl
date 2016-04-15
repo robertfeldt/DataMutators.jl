@@ -1,4 +1,6 @@
 module DataShrinkers
+using GodelTest
+
 export shrink
 
 abstract AbstractDataShrinker
@@ -30,6 +32,8 @@ function shrink(v)
   s == nothing && error("No shrinker found for type $(typeof(v))")
   shrink(s, v)
 end
+
+include("size_reduction_analysis.jl")
 
 include("array_shrinkers.jl")
 end
