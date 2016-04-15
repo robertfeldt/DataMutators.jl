@@ -81,4 +81,14 @@ end
     @test length(r) < length(a)
 end
 
+@testset "library contains array shrinkers for arrays with common, basic types" begin
+    for t in [Int64, Int32, Int16, Int8]
+        a = t[1, rand(1:10)]
+        @test length(shrink(a)) < length(a)
+    end
+
+    a = Float64[1.0, 10*rand()]
+    @test length(shrink(a)) < length(a)
+end
+
 end

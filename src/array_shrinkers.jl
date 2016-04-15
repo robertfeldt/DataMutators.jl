@@ -20,10 +20,7 @@ end
 
 DataShrinkers.register(ArrayShrinker(1),    Array, "remove one random element of an array")
 DataShrinkers.register(HalfArrayShrinker(), Array, "remove half of the elements of an array")
-
-# Also register for arrays of specific sub-types
-PrimitiveTypes = [Int, Real, Float64]
-for p in PrimitiveTypes
+for p in PrimitiveNumberTypes
   DataShrinkers.register(ArrayShrinker(1),    Vector{p}, "remove one random element of an array of $p")
   DataShrinkers.register(HalfArrayShrinker(), Vector{p}, "remove half of the elements of an array of $p")
 end
