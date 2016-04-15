@@ -1,4 +1,4 @@
-import DataShrinkers: ArrayShrinker, shrink, HalfArrayShrinker, size_reductions
+import DataShrinkers: ArrayShrinker, shrink, HalfArrayShrinker, size_reductions, ArrayElementShrinker
 
 @generator IntArrayGen begin
     start = Int[rand(1:100) for i in 0:rand(1:37)]
@@ -75,13 +75,27 @@ end
     end
 end
 
+@testset "ArrayElementShrinker cannot grow & somtimes shrinks" begin
+    s = ArrayElementShrinker()
+    numshrunk = 0
+    for i in 1:100
+        a = gen(intArrayGen)
+        r = shrink(s, a)
+        lenr = length(string(r))
+        lena = length(string(a))
+        @test lenr <= lena
+        numshrunk += ((lenr < lena) ? 1 : 0)
+    end
+    @test numshrunk > 0 # At least once in 100 tries
+end
+
 @testset "picks any of the shrinker if no explicit shrinker given" begin
     a = collect(1:20)
     r = shrink(a)
     @test length(r) < length(a)
 end
 
-@testset "library contains array shrinkers for arrays with common, basic types" begin
+@testset "library has shrinkers for arrays of common types" begin
     for t in [Int64, Int32, Int16, Int8]
         a = t[1, rand(1:10)]
         @test length(shrink(a)) < length(a)

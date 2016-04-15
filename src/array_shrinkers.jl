@@ -18,6 +18,15 @@ function shrink{T}(s::ArrayShrinker, a::Vector{T})
   res
 end
 
+immutable ArrayElementShrinker <: AbstractDataShrinker
+end
+function shrink{T}(s::ArrayElementShrinker, a::Vector{T})
+  res = deepcopy(a)
+  idx = rand(1:length(a))
+  res[idx] = shrink(a[idx])
+  res
+end
+
 DataShrinkers.register(ArrayShrinker(1),    Array, "remove one random element of an array")
 DataShrinkers.register(HalfArrayShrinker(), Array, "remove half of the elements of an array")
 for p in PrimitiveNumberTypes
