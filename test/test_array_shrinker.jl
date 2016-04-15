@@ -5,6 +5,15 @@ import DataShrinkers: ArrayShrinker, shrink, HalfArrayShrinker, size_reductions
 end
 const intArrayGen = IntArrayGen()
 
+@generator FloatArrayGen begin
+    start = begin
+        minval = -100.0 + 200 * rand()
+        maxval = minval + 100 * rand()
+        Float64[rand(minval:maxval) for i in 0:rand(1:37)]
+    end
+end
+const floatArrayGen = FloatArrayGen()
+
 @testset "Array shrinker" begin
 
 @testset "ArrayShrinker(1)" begin
@@ -39,6 +48,9 @@ end
     @testset "mean size reduction is below 50% when arrays typically have more than a few elements" begin
         srs = size_reductions(ArrayShrinker(1), intArrayGen, 100)
         @test mean(srs) < 0.5
+
+        srs = size_reductions(ArrayShrinker(1), floatArrayGen, 100)
+        @test mean(srs) < 0.5
     end
 end
 
@@ -56,11 +68,14 @@ end
 
     @testset "mean size reduction is around to 50%" begin
         srs = size_reductions(HalfArrayShrinker(), intArrayGen, 100)
-        @test 0.3 < mean(srs) < 0.7
+        @test 0.4 < mean(srs) < 0.6
+
+        srs = size_reductions(HalfArrayShrinker(), floatArrayGen, 100)
+        @test 0.4 < mean(srs) < 0.6
     end
 end
 
-@testset "no explicit shrinker" begin
+@testset "picks any of the shrinker if no explicit shrinker given" begin
     a = collect(1:20)
     r = shrink(a)
     @test length(r) < length(a)
