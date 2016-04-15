@@ -13,6 +13,10 @@ shrinkers_for_type(t::Type) = get(LibTypeToShrinkers, t, AbstractDataShrinker[])
 function register{T <: Type}(s::AbstractDataShrinker, t::T, desc = "")
     LibTypeToShrinkers[t] = shrinkers = shrinkers_for_type(t)
     push!(shrinkers, s)
+    if haskey(LibDescToShrinker, desc)
+        warning("Overwriting existing shrinker for key $desc")
+    end
+    LibDescToShrinker[desc] = s
 end
 
 function find_shrinker_for_type{T <: Type}(t::T)
@@ -33,7 +37,10 @@ function shrink(v)
   shrink(s, v)
 end
 
+const PrimitiveNumberTypes = [Int64, Int32, Int16, Int8, Float64]
+
 include("size_reduction_analysis.jl")
 
 include("array_shrinkers.jl")
+include("number_shrinkers.jl")
 end

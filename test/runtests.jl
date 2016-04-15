@@ -8,4 +8,7 @@ end
 using DataShrinkers
 using GodelTest
 
-include("test_array_shrinker.jl")
+@testset "DataShrinkers test suite" begin
+    include("test_array_shrinker.jl")
+    include("test_number_shrinker.jl")
+end
