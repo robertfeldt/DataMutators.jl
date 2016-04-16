@@ -92,17 +92,20 @@ end
 @testset "picks any of the shrinker if no explicit shrinker given" begin
     a = collect(1:20)
     r = shrink(a)
-    @test length(r) < length(a)
+    @test r != a
+    @test length(string(r)) <= length(string(a))
 end
 
 @testset "library has shrinkers for arrays of common types" begin
     for t in [Int64, Int32, Int16, Int8]
         a = t[1, rand(1:10)]
-        @test length(shrink(a)) < length(a)
+        r = shrink(a)
+        @test r != a
     end
 
     a = Float64[1.0, 10*rand()]
-    @test length(shrink(a)) < length(a)
+    r = shrink(a)
+    @test r != a
 end
 
 end
