@@ -1,5 +1,6 @@
-module DataShrinkers
-using GodelTest
+module DataMutators
+
+using DataGenerators
 
 export shrink
 
@@ -12,4 +13,5 @@ include("size_reduction_analysis.jl")
 
 include("array_shrinkers.jl")
 include("number_shrinkers.jl")
+
 end

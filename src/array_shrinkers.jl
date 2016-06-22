@@ -27,11 +27,11 @@ function shrink{T}(s::ArrayElementShrinker, a::Vector{T})
   res
 end
 
-DataShrinkers.register(ArrayShrinker(1),       Array, "remove one random element of an array")
-DataShrinkers.register(HalfArrayShrinker(),    Array, "remove half of the elements of an array")
-DataShrinkers.register(ArrayElementShrinker(), Array, "shrink an element of an array")
+DataMutators.register(ArrayShrinker(1),       AbstractArray{Any,1}, "remove one random element of an array")
+DataMutators.register(HalfArrayShrinker(),    AbstractArray{Any,1}, "remove half of the elements of an array")
+DataMutators.register(ArrayElementShrinker(), AbstractArray{Any,1}, "shrink an element of an array")
 for p in PrimitiveNumberTypes
-  DataShrinkers.register(ArrayShrinker(1),       Vector{p}, "remove one random element of an array of $p")
-  DataShrinkers.register(HalfArrayShrinker(),    Vector{p}, "remove half of the elements of an array of $p")
-  DataShrinkers.register(ArrayElementShrinker(), Vector{p}, "shrink an element of an array of $p")
+  DataMutators.register(ArrayShrinker(1),       Vector{p}, "remove one random element of an array of $p")
+  DataMutators.register(HalfArrayShrinker(),    Vector{p}, "remove half of the elements of an array of $p")
+  DataMutators.register(ArrayElementShrinker(), Vector{p}, "shrink an element of an array of $p")
 end
