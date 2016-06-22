@@ -1,4 +1,4 @@
-import DataShrinkers: ArrayShrinker, shrink, HalfArrayShrinker, size_reductions, ArrayElementShrinker
+import DataMutators: ArrayShrinker, shrink, HalfArrayShrinker, size_reductions, ArrayElementShrinker
 
 @generator IntArrayGen begin
     start = Int[rand(1:100) for i in 0:rand(1:37)]
@@ -79,7 +79,7 @@ end
     s = ArrayElementShrinker()
     numshrunk = 0
     for i in 1:100
-        a = gen(intArrayGen)
+        a = choose(intArrayGen)
         r = shrink(s, a)
         lenr = length(string(r))
         lena = length(string(a))

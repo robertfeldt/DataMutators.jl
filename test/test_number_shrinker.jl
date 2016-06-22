@@ -1,4 +1,4 @@
-import DataShrinkers: SubtractNumberShrinker
+import DataMutators: SubtractNumberShrinker
 
 @testset "Number shrinkers" begin
 

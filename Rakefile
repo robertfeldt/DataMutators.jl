@@ -1,4 +1,4 @@
-Lib = "DataShrinkers"
+Lib = "DataMutators"
 TestDir = "test"
 
 # General parameters that the user can set from the command line.

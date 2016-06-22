@@ -9,7 +9,7 @@ function size_reductions(s::AbstractDataShrinker, datagen,
 
     reductions = Array(Float64, numsamples)
     for i in 1:numsamples
-        datum = GodelTest.gen(datagen)
+        datum = DataGenerators.choose(datagen)
         origsize = length(string(datum))
         shrunkdatum = shrink(s, datum)
         shrunksize = length(string(shrunkdatum))
