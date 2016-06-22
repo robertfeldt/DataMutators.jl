@@ -7,7 +7,7 @@ function register{T <: Type}(s::AbstractDataShrinker, t::T, desc = "")
     LibTypeToShrinkers[t] = shrinkers = shrinkers_for_type(t)
     push!(shrinkers, s)
     if haskey(LibDescToShrinker, desc)
-        warning("Overwriting existing shrinker for key $desc")
+        warn("Overwriting existing shrinker for key $desc")
     end
     LibDescToShrinker[desc] = s
 end
