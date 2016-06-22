@@ -1,9 +1,11 @@
 DataShrinkers.jl
 ================
 
-In automated testing, once you have found a datum that produces a test failure you want to shrink it to its simplest possible form that still shows the failure. This way there is less for the human to look at and analyse in order to understand the cause of the failure. This Julia package implements external shrinking, i.e. it can shrink data without access to information about how the data was generated. This can be viewed as a sort of external shrinking, in contrast to internal shrinkers that utilize information from the generation process.
+In automated testing, once you have found a datum that produces a test failure you want to shrink it to its simplest possible form that still shows the failure. This way there is less for the human to look at and analyse in order to understand the cause of the failure. This Julia package implements external shrinking, i.e. it can shrink data without access to information about how the data was generated. This is in contrast to internal shrinkers that utilize information from the generation process.
 
-Although external shrinking typically requires you to write new code for the specific types you want to shrink the design of this library makes this almost trivially easy to do. The reason is that you can reuse existing shrinkers for the basic Julia types.
+Although external shrinking typically requires you to write new code for the specific types you want to shrink the design of this library makes this almost trivially easy to do. The reason is that you can reuse existing shrinkers for the basic Julia types and we leverage Julia's powerful type system.
+
+This package is currently in an initial state and will change in the coming weeks, leading up to an initial release in the summer of 2016.
 
 # Example
 
