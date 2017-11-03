@@ -47,3 +47,6 @@ function mutate(m::CopyChars, s::String)
 end
 
 DataMutators.register(CopyChars(1), String, "replace one char of a string with another char from that string")
+DataMutators.register(ArrayShrinker(1),       AbstractArray{String,1}, "remove one random element of a String array")
+DataMutators.register(HalfArrayShrinker(),    AbstractArray{String,1}, "remove half of the elements of a String array")
+DataMutators.register(ArrayElementShrinker(), AbstractArray{String,1}, "shrink an element of a String array")

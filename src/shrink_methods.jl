@@ -1,12 +1,17 @@
-function safe_find_shrinker_for_type(t::Type)
-    s = find_shrinker_for_type(t)
-    s == nothing && error("No shrinker found for type $(typeof(v))")
+function safe_find_mutator_for_type(t::Type; findshrinker = false)
+    s = find_mutator_for_type(t; findshrinker = findshrinker)
+    if s == nothing
+        styp = findshrinker ? "shrinker" : "mutator"
+        error("No $styp found for type $t")
+    end
     s
 end
 
-safe_find_shrinker_for_type_of(v) = safe_find_shrinker_for_type(typeof(v))
-
-shrink(v) = shrink(safe_find_shrinker_for_type_of(v), v)
+safe_find_shrinker_for_type(t::Type) = safe_find_mutator_for_type(t; findshrinker = true)
+safe_find_shrinker_for(v) = safe_find_shrinker_for_type(typeof(v))
+safe_find_mutator_for(v) = safe_find_mutator_for_type(typeof(v))
+shrink(v) = shrink(safe_find_shrinker_for(v), v)
+mutate(v) = mutate(safe_find_mutator_for(v), v)
 
 function length_reduction(newdatum, origdatum)
     ln = length(string(newdatum))
@@ -19,7 +24,7 @@ Shrink datum repeatedly until no shrinker succeeds without turning property.
 """
 function shrink_until(datum, property::Function; 
     numRetriesBeforeFail = 50, 
-    probReuseSuccessful = 0.5,
+    probReuseSuccessful = 0.9,
     traceShrinkers = false)
 
     d = deepcopy(datum)
@@ -31,9 +36,11 @@ function shrink_until(datum, property::Function;
             # Reuse last successful one with some probability
             if latest_successful_shrinker != nothing && rand() <= probReuseSuccessful
                 newd = shrink(latest_successful_shrinker, d)
+                #@show ("reuse", newd, d, latest_successful_shrinker)
             else
-                latest_successful_shrinker = safe_find_shrinker_for_type_of(d)
+                latest_successful_shrinker = safe_find_shrinker_for(d)
                 newd = shrink(latest_successful_shrinker, d)
+                #@show ("new", newd, d, latest_successful_shrinker)
             end
             if property(newd) == true
                 # We shrunk too far/much so property no longer violated. We need to back up.

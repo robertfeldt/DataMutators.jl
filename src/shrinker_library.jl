@@ -17,18 +17,19 @@ function register{T <: Type}(m::AbstractDataMutator, t::T, desc = "")
     LibDescToMutators[desc] = m
 end
 
-sample{T}(a::Vector{T}) = length(a) >= 1 ? a[rand(1:length(a))] : nothing
-
-function find_shrinker_for_type{T <: Type}(t::T)
+function find_mutator_for_type{T <: Type}(t::T; findshrinker = false)
     s = nothing
     while s == nothing && t != Any
-        shrinkers = shrinkers_for_type(t)
-        if length(shrinkers) > 0
-            return shrinkers[rand(1:length(shrinkers))]
+        mutators = findshrinker ? shrinkers_for_type(t) : mutators_for_type(t)
+        if length(mutators) > 0
+            return mutators[rand(1:length(mutators))]
         end
-        t = super(t)
+        #@show ("not found", t)
+        t = supertype(t)
     end
     return nothing
 end
+
+find_shrinker_for_type{T <: Type}(t::T) = find_mutator_for_type(t; findshrinker = false)
 
 const PrimitiveNumberTypes = [Int64, Int32, Int16, Int8, Float64]

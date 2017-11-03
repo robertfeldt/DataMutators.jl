@@ -22,4 +22,8 @@ fd = [1,2,3,4]
 # We can now shrink it like so
 using DataMutators
 smaller = shrink(fd, prop_last_is_first)
+
+# But this works also for other and more complex datums that violates the spec:
+fd2 = ["longer", "strings", "than", "needed"]
+smaller2 = shrink(fd2, prop_last_is_first)
 ```

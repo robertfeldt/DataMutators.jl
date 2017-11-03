@@ -63,4 +63,9 @@ end
     end
 end
 
+@testset "Picks some string mutators if none explicitly given" begin
+    s = "arne"
+    r = mutate(s)
+    @test r != s
+end
 end
