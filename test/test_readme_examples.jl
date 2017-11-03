@@ -7,7 +7,7 @@ prop_last_is_first(l) = last(l) == first(buggyreverse(l))
 @testset "buggyreverse shrinking example" begin
     fd = [1, 2, 3, 4]
     res = shrink(fd, prop_last_is_first)
-    @test res == [0, 1]
+    @test sort(res) == [0, 1]
 end
 
 end
