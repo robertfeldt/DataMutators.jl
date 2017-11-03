@@ -26,4 +26,7 @@ smaller = shrink(fd, prop_last_is_first)
 # But this works also for other and more complex datums that violates the spec:
 fd2 = ["longer", "strings", "than", "needed"]
 smaller2 = shrink(fd2, prop_last_is_first)
+
+fd3 = [0, 1.1, "than", "needed", [1, 2, "ab"]]
+smaller3 = shrink(fd3, prop_last_is_first)
 ```
