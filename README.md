@@ -10,9 +10,9 @@ This package is currently in an initial state and will change in the coming week
 # Example
 
 ```
-# Lets create a reverse function that fails when length of reversed list is less than 5 or contains other lists.
+# Lets create a reverse function that fails when length of reversed list is less than 4 or contains other lists.
 function buggyreverse(l)
-  if length(l) < 5 || any(e->isa(e, Array), l)
+  if length(l) < 4 || any(e->isa(e, Array), l)
     l
   else
     reverse(l)
@@ -20,12 +20,12 @@ function buggyreverse(l)
 end
 
 # Property being tested
-prop(l) = buggyreverse(buggyreverse(l)) == l
+prop_last_is_first(l) = last(l) == first(buggyreverse(l))
 
 # Lets say our auto testing tool has found the following datum that violates the spec
 fd = [1,2,3,4]
 
 # We can now shrink it like so
 using DataMutators
-smaller = shrink(fd, prop)
+smaller = shrink(fd, prop_last_is_first)
 ```
