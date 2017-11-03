@@ -1,12 +1,12 @@
 import DataMutators: ArrayShrinker, shrink, HalfArrayShrinker, size_reductions, ArrayElementShrinker
 
 @generator IntArrayGen begin
-    start = Int[rand(1:100) for i in 0:rand(1:37)]
+    start() = Int[rand(1:100) for _ in 0:rand(1:37)]
 end
 const intArrayGen = IntArrayGen()
 
 @generator FloatArrayGen begin
-    start = begin
+    start() = begin
         minval = -100.0 + 200 * rand()
         maxval = minval + 100 * rand()
         Float64[rand(minval:maxval) for i in 0:rand(1:37)]
