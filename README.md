@@ -10,14 +10,8 @@ This package is currently in an initial state and will change in the coming week
 # Example
 
 ```
-# Lets create a reverse function that fails when length of reversed list is less than 4 or contains other lists.
-function buggyreverse(l)
-  if length(l) < 4 || any(e->isa(e, Array), l)
-    l
-  else
-    reverse(l)
-  end
-end
+# Lets create a reverse function that fails when length of reversed list is less than 5.
+buggyreverse(l) = (length(l) < 5) ? l : reverse(l)
 
 # Property being tested
 prop_last_is_first(l) = last(l) == first(buggyreverse(l))
