@@ -1,4 +1,4 @@
-using DataMutators: deleteat, DeleteChars, CopyChars
+using DataMutators: deleteat, DeleteChars, CopyChars, MutateStringPattern, mutate_int_string
 
 @testset "String mutators" begin
 
@@ -63,9 +63,43 @@ end
     end
 end
 
+@testset "mutate_int_string" begin
+    @test mutate_int_string("12", i -> i-1) == "11"
+    @test mutate_int_string("12", i -> i+1) == "13"
+
+    @test mutate_int_string("19", i -> i+1) == "20"
+    @test mutate_int_string("11", i -> i-1) == "10"
+
+    @test mutate_int_string("10", i -> i-1, "0") == "09"
+    @test mutate_int_string("10", i -> i-1)      == "09"
+
+    @test mutate_int_string("10", i -> i-1, "") == "9"
+
+    @test mutate_int_string("9", i -> i+1, "0", false) == "10"
+    @test mutate_int_string("9", i -> i+1, "",  false) == "10"
+
+    @test mutate_int_string("9", i -> i+1, "0", true) == "0" # Chopped since too long
+end
+
+@testset "MutateStringPattern" begin
+    # Decrease char digits
+    m = MutateStringPattern(r"\d", is -> string(max(0, parse(Int, is)-1)))
+
+    @test mutate(m, "") == ""
+    @test mutate(m, "a") == "a"
+    @test mutate(m, "abcd") == "abcd"
+
+    @test mutate(m, "1") == "0"
+    @test mutate(m, "a1") == "a0"
+    @test mutate(m, "a2b") == "a1b"
+    @test in(mutate(m, "a3b4c"), Any["a3b3c", "a2b4c"])
+    @test in(mutate(m, "a56b"), Any["a46b", "a55b"])
+end
+
 @testset "Picks some string mutators if none explicitly given" begin
     s = "arne"
     r = mutate(s)
     @test r != s
 end
+
 end
