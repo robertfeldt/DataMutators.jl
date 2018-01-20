@@ -32,7 +32,7 @@ fd2 = ["longer", "strings", "than", "needed"]
 smaller2 = shrink(fd2, prop_last_is_first)
 ensure_prop(prop_last_is_first, fd2, smaller2)
 
-fd3 = [0, 1.1, "than", "needed", [1, 2, "ab"]]
+fd3 = [0, "than", "needed", [1.1, 2, "ab"]]
 smaller3 = shrink(fd3, prop_last_is_first)
 ensure_prop(prop_last_is_first, fd3, smaller3)
 ```
