@@ -42,14 +42,27 @@ Shrink datum repeatedly until no shrinker succeeds without turning property.
 function shrink_until(datum, property::Function; 
     numRetriesBeforeFail = 50, 
     probReuseSuccessful = 0.9,
-    traceShrinkers = false)
+    traceShrinkers = false,
+    traceDatums = false,
+    traceSwitches = false)
 
     d = deepcopy(datum)
+    orig_property_value = property(d)
+
     numtotalretries = numretries = 0
     latest_successful_shrinker = nothing
-    trace = AbstractDataShrinker[] # Save the order of successful shrinkers
+    strace = AbstractDataShrinker[] # Save the order of successful shrinkers
+
+    dtrace = Any[] # Save the sequence of datums
+    if traceDatums
+        push!(dtrace, d)
+    end
+
+    swtrace = Any[] # Save all border values we encounter, i.e. where property switches value.
+
     while numretries < numRetriesBeforeFail
         try
+            # Get a new shrunk/mutated datum. 
             # Reuse last successful one with some probability
             if latest_successful_shrinker != nothing && rand() <= probReuseSuccessful
                 newd = shrink(latest_successful_shrinker, d)
@@ -59,22 +72,36 @@ function shrink_until(datum, property::Function;
                 newd = shrink(latest_successful_shrinker, d)
                 #@show ("new", newd, d, latest_successful_shrinker)
             end
-            if property(newd) == true
-                # We shrunk too far/much so property no longer violated. We need to back up.
+
+            if property(newd) != orig_property_value
+
+                # We shrunk too far/much so property switched value. We need to back up.
                 numretries += 1
                 latest_successful_shrinker = nothing
+                if traceSwitches
+                    push!(swtrace, (d, newd))
+                end
+
             else
+
                 lenreduction = length_reduction(newd, d)
                 if lenreduction < 0.0 || newd == d # It grew or stayed the same
                     numretries += 1 # Lets try again unless too many retries
                     latest_successful_shrinker = nothing
                 else
-                    # The shrink was ok, property still violated. Reset num retries and use the new
+                    # The shrink was ok, property still has same value. 
+                    # Reset num retries and use the new
                     # datum as the starting point for next try.
                     numtotalretries += numretries
                     numretries = 0
+
+                    if traceDatums
+                        push!(dtrace, newd)
+                    end
+
                     d = newd
-                    if traceShrinkers && (length(trace) == 0 || trace[end] != latest_successful_shrinker)
+
+                    if traceShrinkers && (length(strace) == 0 || strace[end] != latest_successful_shrinker)
                         push!(trace, latest_successful_shrinker)
                     end
                 end
@@ -83,10 +110,7 @@ function shrink_until(datum, property::Function;
             numretries += 1
         end
     end
-    if traceShrinkers
-        @show trace
-    end
-    return d, length_reduction(d, datum), (numtotalretries + numretries), trace
+    return d, length_reduction(d, datum), (numtotalretries + numretries), strace, dtrace, swtrace
 end
 
-shrink(datum, property; options...) = shrink_until(datum, property; options...)[1]
+shrink(datum, property::Function; options...) = shrink_until(datum, property; options...)[1]
