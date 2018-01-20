@@ -2,14 +2,21 @@ module DataMutators
 
 using DataGenerators
 using StatsBase
+using Compat
 
 export shrink, mutate, grow
 
+# Utils
+include("type_chain_iterators.jl")
+
+# Types
 include("abstract_data_mutator.jl")
 
+# Library
 include("shrinker_library.jl")
-include("shrink_methods.jl")
 
+# Top-level API
+include("shrink_methods.jl")
 include("size_reduction_analysis.jl")
 
 # Shrinkers
@@ -19,7 +26,7 @@ include("number_shrinkers.jl")
 # Mutators
 include("string_mutators.jl")
 
-# Type changing mutators
+# Type switching mutators
 include("type_switching_mutator.jl")
 
 end

@@ -2,7 +2,7 @@ Lib = "DataMutators"
 TestDir = "test"
 
 # General parameters that the user can set from the command line.
-Julia = ENV["minreps"] || "julia"
+Julia = "julia05"
 MinReps = (ENV["minreps"] || 30).to_i
 MaxReps = (ENV["maxreps"] || 1000).to_i
 MaxRepTime = (ENV["maxreptime"] || 1.0).to_f

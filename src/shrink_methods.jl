@@ -10,8 +10,25 @@ end
 safe_find_shrinker_for_type(t::Type) = safe_find_mutator_for_type(t; findshrinker = true)
 safe_find_shrinker_for(v) = safe_find_shrinker_for_type(typeof(v))
 safe_find_mutator_for(v) = safe_find_mutator_for_type(typeof(v))
-shrink(v) = shrink(safe_find_shrinker_for(v), v)
-mutate(v) = mutate(safe_find_mutator_for(v), v)
+
+function apply_mutators_until_change(datum; onlyshrinkers = false)
+    t = typeof(datum)
+    mutators = find_mutators_for_type(t; onlyshrinkers = onlyshrinkers)
+    if mutators == nothing || length(mutators) == 0
+        styp = onlyshrinkers ? "shrinker" : "mutator"
+        error("No $styp found for type $t")
+    end
+    for m in shuffle(mutators)
+        newdatum = mutate(m, datum)
+        if newdatum != datum
+            return newdatum
+        end
+    end
+    return datum
+end
+
+shrink(d) = apply_mutators_until_change(d; onlyshrinkers = true)
+mutate(d) = apply_mutators_until_change(d; onlyshrinkers = false)
 
 function length_reduction(newdatum, origdatum)
     ln = length(string(newdatum))

@@ -75,7 +75,7 @@ end
     end
 end
 
-@testset "ArrayElementShrinker cannot grow & somtimes shrinks" begin
+@testset "ArrayElementShrinker cannot grow & sometimes shrinks" begin
     s = ArrayElementShrinker()
     numshrunk = 0
     for i in 1:100
