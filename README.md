@@ -23,10 +23,16 @@ fd = [1,2,3,4]
 using DataMutators
 smaller = shrink(fd, prop_last_is_first)
 
+# Let's ensure they both have the same value for the property (i.e. false, a violation)
+ensure_prop(prop, v1, v2) = (prop(v1) == false) && (prop(v1) == prop(v2))
+ensure_prop(prop_last_is_first, fd, smaller)
+
 # But this works also for other and more complex datums that violates the spec:
 fd2 = ["longer", "strings", "than", "needed"]
 smaller2 = shrink(fd2, prop_last_is_first)
+ensure_prop(prop_last_is_first, fd2, smaller2)
 
 fd3 = [0, 1.1, "than", "needed", [1, 2, "ab"]]
 smaller3 = shrink(fd3, prop_last_is_first)
+ensure_prop(prop_last_is_first, fd3, smaller3)
 ```
