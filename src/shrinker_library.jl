@@ -3,7 +3,10 @@ const LibDescToMutators = Dict{AbstractString, AbstractDataMutator}()
 
 filter_shrinkers(ms::Vector{AbstractDataMutator}) = filter(m -> typeof(m) <: AbstractDataShrinker, ms)
 shrinkers_for_type(t::Type) = filter_shrinkers(mutators_for_type(t))
-mutators_for_type(t::Type) = get(LibTypeToMutators, t, AbstractDataMutator[])
+function mutators_for_type(t::Type)
+    global LibTypeToMutators
+    get(LibTypeToMutators, t, AbstractDataMutator[])
+end
 
 # Cached lookups to dir. Cache is emptied whenever there is a new mutator registered.
 const CacheTypeToMutators = Dict{Type, Vector{AbstractDataMutator}}()
