@@ -1,0 +1,28 @@
+Mutation
+ - Captures a simple change/mutation to a datum.
+ - Complex mutations can be further expanded to a set of Mutations.
+ - Atomic mutations cannot be further expanded.
+
+Mutator
+ - Given a datum a mutator creates a list of mutations that, when applied, will mutate that datum.
+ - This design allows for considering the detailed Mutations only when it is motivated by a search.
+
+Searchers
+ - Given specific search goals such as searching for simpler datums or for switches in predicates etc a searcher applies Mutators to reach the goal.
+ - These searches will typically need to be stochastic since there are many different mutators that could be applied and in many/any order(s).
+
+Matching mutators to datums
+ - We cannot simply use Julia's type system to match a datum to a Mutator to apply to it. This is since this matching is one-to-many while Julia's type system and dispatching has to have one clear option.
+ - Depending on the goal the matching will also need to be different and it is not clear we can now from the start what is the effect of a certain Mutator for a certain data type. Thus we prefer if the system can dynamically learn about the effect of Mutators on different types or datums.
+ - For example, rather than declaring a certain Mutator to be one that shrinks datums of a certain type we would like to learn about this.
+ - Thus we need a flexible way to explore the effects of different Mutators. And to save such info to disk dynamically.
+
+MutatorMatcher
+ - Can explore the effect of a Mutator on a datum / type of datum and thus help refine the matching of Mutators.
+ - Can save data about its explorations to disk.
+ - Default explorations are about the probability that a datum is shrunk and how much etc.
+ - When matching to a datum a searchgoal can be specified: mutatorforgoal(mutatormatcher, searchgoal)
+
+SearchGoal
+ - The canonical search goal is to shrink the size of a datum while fulfilling some other constraints (like ensuring a predicate has the same value).
+ - More complex search goals can have multiple things to be optimized and multiple constraints.
