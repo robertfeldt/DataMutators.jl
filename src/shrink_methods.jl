@@ -1,34 +1,34 @@
-function safe_find_mutator_for_type(t::Type; findshrinker = false)
-    s = find_mutator_for_type(t; findshrinker = findshrinker)
+function safe_find_mutator_for_type(t::Type; mutatorSelectionContext = DefaultMutatorSelectionContext())
+    s = find_mutator_for_type(t; mutatorSelectionContext = mutatorSelectionContext)
     if s == nothing
-        styp = findshrinker ? "shrinker" : "mutator"
-        error("No $styp found for type $t")
+        error("No mutator found for type $t")
     end
     s
 end
 
-safe_find_shrinker_for_type(t::Type) = safe_find_mutator_for_type(t; findshrinker = true)
+safe_find_shrinker_for_type(t::Type) = safe_find_mutator_for_type(t; mutatorSelectionContext = DefaultMutatorSelectionContext(true))
 safe_find_shrinker_for(v) = safe_find_shrinker_for_type(typeof(v))
 safe_find_mutator_for(v) = safe_find_mutator_for_type(typeof(v))
 
-function apply_mutators_until_change(datum; onlyshrinkers = false)
+function apply_mutators_until_change(datum; mutatorSelectionContext = DefaultMutatorSelectionContext())
     t = typeof(datum)
-    mutators = find_mutators_for_type(t; onlyshrinkers = onlyshrinkers)
+    mutators = find_mutators_for_type(t)
+    mutators = filter(mutatorSelectionContext, mutators)
     if mutators == nothing || length(mutators) == 0
-        styp = onlyshrinkers ? "shrinker" : "mutator"
-        error("No $styp found for type $t")
+        error("No mutator found for type $t")
     end
     for m in shuffle(mutators)
-        newdatum = mutate(m, datum)
+        muts = mutations(m, datum)
+        newdatum = apply(muts, datum)
         if newdatum != datum
-            return newdatum
+            return (newdatum, muts)
         end
     end
-    return datum
+    return (datum, AbstractDataMutator[])
 end
 
-shrink(d) = apply_mutators_until_change(d; onlyshrinkers = true)
-mutate(d) = apply_mutators_until_change(d; onlyshrinkers = false)
+shrink(d) = apply_mutators_until_change(d; mutatorSelectionContext = DefaultMutatorSelectionContext(true))[1]
+mutate(d) = apply_mutators_until_change(d; mutatorSelectionContext = DefaultMutatorSelectionContext())[1]
 
 function length_reduction(newdatum, origdatum)
     ln = length(string(newdatum))
@@ -51,7 +51,7 @@ function shrink_until(datum, property::Function;
 
     numtotalretries = numretries = 0
     latest_successful_shrinker = nothing
-    strace = AbstractDataShrinker[] # Save the order of successful shrinkers
+    strace = AbstractDataMutator[] # Save the order of successful shrinkers
 
     dtrace = Any[] # Save the sequence of datums
     if traceDatums

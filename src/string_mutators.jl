@@ -1,24 +1,27 @@
+immutable ReplaceSubstrMutation <: AtomicMutation
+    startpos::Int
+    len::Int
+    insertstr::String
+end
+function apply!{S <: String}(m::ReplaceSubstrMutation, s::S)
+    s[1:(m.startpos-1)] * m.insertstr * s[(m.startpos+m.len):end]
+end
+
+# Deleting is just a special case of replacing with an empty string.
+DeleteCharMutation(idx::Int) = ReplaceSubstrMutation(idx, 1, "")
+
 immutable DeleteChars <: AbstractDataShrinker
     numchars::Int
 end
-
-function deleteat(s::String, indices::Array{Int, 1})
-    b = IOBuffer()
-    for i in 1:length(s)
-        if !in(i, indices)
-            print(b, s[i])
-        end
-    end
-    takebuf_string(b)
-end
-
-deleteat(s::String, i::Int) = deleteat(s, Int64[i])
-
-function shrink(m::DeleteChars, s::String)
+function mutations{S <: String}(m::DeleteChars, s::S; mutatorSelectionContext = DefaultMutatorSelectionContext())
     len = length(s)
     numtodelete = min(m.numchars, len)
-    indices_to_delete = StatsBase.sample(1:len, numtodelete; replace=false)
-    deleteat(s, indices_to_delete)
+    indices = sort(StatsBase.sample(1:len, numtodelete; replace=false))
+    res = AbstractMutation[]
+    for i in 1:length(indices)
+        push!(res, DeleteCharMutation(indices[i]+1-i))
+    end
+    return res
 end
 
 DataMutators.register(DeleteChars(1), String, "remove one char of a string")
@@ -26,24 +29,23 @@ DataMutators.register(DeleteChars(1), String, "remove one char of a string")
 immutable CopyChars <: AbstractDataMutator
     numchars::Int
 end
-
-function mutate(m::CopyChars, s::String)
+function mutations{S <: String}(m::CopyChars, s::S; mutatorSelectionContext = DefaultMutatorSelectionContext())
     len = length(s)
     numindices = min(2*m.numchars, len)
     indices = StatsBase.sample(1:len, numindices; replace=false)
 
-    nextindex = 1
-    b = IOBuffer()
-    for i in 1:len
-        if ((nextindex + 1) <= numindices) && (i == indices[nextindex])
-            print(b, s[indices[nextindex + 1]])
-            nextindex += 2
-        else
-            print(b, s[i])
+    if length(indices) > 0
+        res = AbstractMutation[]
+        i = 1
+        while i+1 <= numindices
+            ci = indices[i+1]
+            push!(res, ReplaceSubstrMutation(indices[i], 1, s[ci:ci]))
+            i += 1
         end
+        return res
+    else
+        return AbstractMutation[NoMutation()]
     end
-
-    takebuf_string(b)
 end
 
 DataMutators.register(CopyChars(1), String, "replace one char of a string with another char from that string")
@@ -61,21 +63,20 @@ immutable MutateStringPattern <: AbstractDataMutator
     replaceFn::Function   # Function that takes the matched pattern and returns a string to replace it with.
 end
 
-function mutate(m::MutateStringPattern, s::String)
-    # Find the matching patterns
+function mutation{S <: String}(m::MutateStringPattern, s::S; mutatorSelectionContext = DefaultMutatorSelectionContext())
     matches = collect(eachmatch(m.patternRE, s))
 
     if length(matches) > 0
-        rm = matches[rand(1:length(matches))]
+        rm = StatsBase.sample(matches)
         matchlen = length(rm.match)
         replacement = m.replaceFn(rm.match)
-        return s[1:(rm.offset-1)] * replacement * s[(rm.offset+matchlen):end]
+        return ReplaceSubstrMutation(rm.offset, matchlen, replacement)
     else
-        return s # No mutation if no match found
+        return NoMutation()
     end
 end
 
-function mutate_int_string(intstr::String, updateFn::Function, padding = "0", keepsize=true)
+function mutate_int_string{S <: AbstractString}(intstr::S, updateFn::Function, padding = "0", keepsize=true)
     newint = updateFn(parse(Int, intstr))
     newstr = string(newint)
     nummissing = length(intstr) - length(newstr)
@@ -88,12 +89,12 @@ function mutate_int_string(intstr::String, updateFn::Function, padding = "0", ke
     end
 end
 
-const DecreaseIntsKeepingSize = MutateStringPattern(r"\d+", is -> mutate_int_string(is, i -> i-1, "0"))
-const DecreaseInts = MutateStringPattern(r"\d+", is -> mutate_int_string(is, i -> i-1, ""))
-const IncreaseIntsKeepingSize = MutateStringPattern(r"\d+", is -> mutate_int_string(is, i -> i+1, "0"))
-const IncreaseInts = MutateStringPattern(r"\d+", is -> mutate_int_string(is, i -> i+1, ""))
+const DecreaseIntKeepingSize = MutateStringPattern(r"\d+", is -> mutate_int_string(is, i -> i-1, "0"))
+const DecreaseInt = MutateStringPattern(r"\d+", is -> mutate_int_string(is, i -> i-1, ""))
+const IncreaseIntKeepingSize = MutateStringPattern(r"\d+", is -> mutate_int_string(is, i -> i+1, "0"))
+const IncreaseInt = MutateStringPattern(r"\d+", is -> mutate_int_string(is, i -> i+1, ""))
 
-#DataMutators.register(DecreaseIntsKeepingSize, String, "decrease value of an int sequence within a string, without decreasing length of the string")
-#DataMutators.register(DecreaseInts, String, "decrease value of an int sequence within a string")
-#DataMutators.register(IncreaseIntsKeepingSize, String, "increase value of an int sequence within a string, without decreasing length of the string")
-#DataMutators.register(IncreaseInts, String, "increase value of an int sequence within a string")
+DataMutators.register(DecreaseIntKeepingSize, String, "decrease value of an int sequence within a string, without decreasing length of the string")
+DataMutators.register(DecreaseInt, String, "decrease value of an int sequence within a string")
+DataMutators.register(IncreaseIntKeepingSize, String, "increase value of an int sequence within a string, without decreasing length of the string")
+DataMutators.register(IncreaseInt, String, "increase value of an int sequence within a string")

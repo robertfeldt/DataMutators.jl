@@ -1,4 +1,4 @@
-using DataMutators: TypeSwitchingMutator, mutate
+using DataMutators: shrink
 
 prop_last_is_first(l) = last(l) == first(buggyreverse(l))
 

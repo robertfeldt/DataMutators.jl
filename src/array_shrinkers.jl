@@ -1,30 +1,44 @@
+immutable ArrayDeleteMutation <: AtomicMutation
+  idx::Int
+end
+apply!{T}(ad::ArrayDeleteMutation, d::Vector{T}) = deleteat!(d, ad.idx)
+
 immutable ArrayShrinker <: AbstractDataShrinker
-  num_elems_to_delete::Function
-  ArrayShrinker(fn::Function) = new(fn)
+  num_elems_to_delete::Function # Function from array to be shrunk to num elems to delete
 end
 ArrayShrinker(numdelete::Integer) = ArrayShrinker((l) -> min(length(l), numdelete))
 ArrayShrinker() = ArrayShrinker(1)
 halfsize(a) = ceil(Integer, length(a)/2)
 HalfArrayShrinker() = ArrayShrinker(halfsize)
 
-function shrink{T}(s::ArrayShrinker, a::Vector{T})
-  newlen = length(a) - s.num_elems_to_delete(a)
-  res = Array(T, newlen)
-  # Sort so we keep them in the order they had in orig array
-  keepidxs = sort(shuffle(collect(1:length(a)))[1:newlen])
-  for i in 1:newlen
-    res[i] = a[keepidxs[i]]
+function mutations{T}(s::ArrayShrinker, a::Vector{T}; mutatorSelectionContext = DefaultMutatorSelectionContext())
+  numdelete = s.num_elems_to_delete(a)
+  if numdelete > 0
+      deleteidxs = sort(shuffle(collect(1:length(a)))[1:numdelete])
+      # Note that we must subtract 1 per step since previous ArrayDeleteMutations 
+      # have already shortened the array.
+      return AbstractMutation[ArrayDeleteMutation(deleteidxs[i] + 1 - i) for i in 1:numdelete]
+  else
+      return AbstractMutation[]
   end
-  res
+end
+
+immutable ArrayElementMutation <: AtomicMutation
+  idx::Int
+  elementmuts::Vector{AbstractMutation}
+end
+function apply!{T}(ae::ArrayElementMutation, d::Vector{T})
+  elem = deepcopy(d[ae.idx])
+  d[ae.idx] = apply!(ae.elementmuts, elem)
+  d
 end
 
 immutable ArrayElementShrinker <: AbstractDataShrinker
 end
-function shrink{T}(s::ArrayElementShrinker, a::Vector{T})
-  res = deepcopy(a)
+function mutation{T}(s::ArrayElementShrinker, a::Vector{T}; mutatorSelectionContext = DefaultMutatorSelectionContext())
   idx = rand(1:length(a))
-  res[idx] = shrink(a[idx])
-  res
+  elem = a[idx]
+  ArrayElementMutation(idx, mutations(elem; mutatorSelectionContext = mutatorSelectionContext))
 end
 
 DataMutators.register(ArrayShrinker(1),       AbstractArray{Any,1}, "remove one random element of an array")

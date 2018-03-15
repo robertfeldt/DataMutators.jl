@@ -1,16 +1,28 @@
-immutable SubtractNumberShrinker <: AbstractDataShrinker
-  stepsize
-  SubtractNumberShrinker(stepsize = 1) = new(stepsize)
+immutable SubtractNumberMutation{N <: Number} <: AtomicMutation
+    n::N
 end
-shrink{N <: Number}(s::SubtractNumberShrinker, a::N) = N(a - s.stepsize)
+apply!{N <: Number}(ad::SubtractNumberMutation{N}, d::N) = d - ad.n
 
-immutable MultiplyNumberShrinker <: AbstractDataShrinker
-  factor
+immutable SubtractNumberMutator{N <: Number} <: AbstractDataMutator
+  stepsize::N
 end
-shrink{N <: Integer}(s::MultiplyNumberShrinker, a::N) = round(N, a * s.factor)
-shrink{N <: Real}(s::MultiplyNumberShrinker, a::N) = N(a * s.factor)
+mutation{N <: Number}(m::SubtractNumberMutator{N}, d::N; mutatorSelectionContext = DefaultMutatorSelectionContext()) = 
+  SubtractNumberMutation{N}(m.stepsize)
+
+immutable MultiplyNumberMutation{N <: Number} <: AtomicMutation
+  factor::N
+end
+apply!{D <: Integer, N <: Number}(mn::MultiplyNumberMutation{N}, d::D) = round(D, d * mn.factor)
+apply!{N <: Real}(mn::MultiplyNumberMutation{N}, d::N) = d * mn.factor
+
+immutable MultiplyNumberMutator{N <: Number} <: AbstractDataMutator
+  factor::N
+end
+mutation{N1 <: Number, N2 <: Number}(m::MultiplyNumberMutator{N1}, d::N2; mutatorSelectionContext = DefaultMutatorSelectionContext()) = 
+  MultiplyNumberMutation{N1}(m.factor)
+isshrinker{N <: Number}(m::MultiplyNumberMutator{N}) = abs(m.factor) < 1.0 # Only a shrinker if we go towards 0
 
 for p in PrimitiveNumberTypes
-  DataMutators.register(SubtractNumberShrinker(1),   p, "subtract 1 from number of type $p")
-  DataMutators.register(MultiplyNumberShrinker(0.5), p, "half a number of type $p")
+  DataMutators.register(SubtractNumberMutator{p}(1),   p, "subtract 1 from number of type $p")
+  DataMutators.register(MultiplyNumberMutator{Float64}(0.5), p, "half a number of type $p")
 end

@@ -1,7 +1,6 @@
 const LibTypeToMutators = Dict{Type, Vector{AbstractDataMutator}}()
 const LibDescToMutators = Dict{AbstractString, AbstractDataMutator}()
 
-filter_shrinkers(ms::Vector{AbstractDataMutator}) = filter(m -> typeof(m) <: AbstractDataShrinker, ms)
 shrinkers_for_type(t::Type) = filter_shrinkers(mutators_for_type(t))
 function mutators_for_type(t::Type)
     global LibTypeToMutators
@@ -34,28 +33,27 @@ function cachemutators!(ms::Vector{AbstractDataMutator}, t::Type)
     CacheTypeToMutators[t] = ms
 end
 
-function find_mutators_for_type{T <: Type}(t::T; onlyshrinkers = false)
+function find_mutators_for_type{T <: Type}(t::T)
     # If the type is in the cache we can just return it. Saves us from having to
     # search in the library again.
     if haskey(CacheTypeToMutators, t)
         ms = CacheTypeToMutators[t]
-        return (onlyshrinkers ? filter_shrinkers(ms) : ms)
+        return ms
     end
 
     # If the type is in the library return the saved mutators after caching them.
     if haskey(LibTypeToMutators, t)
         allms = mutators_for_type(t)
         cachemutators!(allms, t)
-        return (onlyshrinkers ? filter_shrinkers(allms) : allms)
+        return allms
     end
 
     # First search up the type chain
     for tt in SupertypeChainIterator(t)
         allms = mutators_for_type(tt)
-        ms = onlyshrinkers ? filter_shrinkers(allms) : allms
-        if length(ms) > 0
+        if length(allms) > 0
             cachemutators!(allms, t)
-            return ms
+            return allms
         end
         #@show ("not found, supertype search", tt)
     end
@@ -63,10 +61,9 @@ function find_mutators_for_type{T <: Type}(t::T; onlyshrinkers = false)
     # If nothing found we also search up the subtype/supertype chain.
     for tt in SubSupertypeChainIterator(t)
         allms = mutators_for_type(tt)
-        ms = onlyshrinkers ? filter_shrinkers(allms) : allms
-        if length(ms) > 0
+        if length(allms) > 0
             cachemutators!(allms, t)
-            return ms
+            return allms
         end
         #@show ("not found, subsupertype search", tt)
     end
@@ -74,15 +71,27 @@ function find_mutators_for_type{T <: Type}(t::T; onlyshrinkers = false)
     return nothing # Indicates that nothing was found...
 end
 
-function find_mutator_for_type{T <: Type}(t::T; findshrinker = false)
-    ms = find_mutators_for_type(t; onlyshrinkers = findshrinker)
+function find_mutator_for_type{T <: Type}(t::T; mutatorSelectionContext = DefaultMutatorSelectionContext())
+    ms = find_mutators_for_type(t)
     if ms == nothing || length(ms) < 1
         return nothing
     else
-        return StatsBase.sample(ms)
+        return select(mutatorSelectionContext, ms)
     end
 end
 
-find_shrinker_for_type{T <: Type}(t::T) = find_mutator_for_type(t; findshrinker = true)
+function find_mutator_for_datum(d; mutatorSelectionContext = DefaultMutatorSelectionContext())
+    find_mutator_for_type(typeof(d); mutatorSelectionContext = mutatorSelectionContext)
+end
+
+# To find mutations for a datum we select some mutator for its type and then
+# get mutations from it.
+function mutations(d; mutatorSelectionContext = DefaultMutatorSelectionContext())
+    mutator = find_mutator_for_datum(d; mutatorSelectionContext = mutatorSelectionContext)
+    if mutator == nothing
+        error("Did not find a mutator for $d")
+    end
+    mutations(mutator, d)
+end
 
 const PrimitiveNumberTypes = [Int64, Int32, Int16, Int8, Float64]
