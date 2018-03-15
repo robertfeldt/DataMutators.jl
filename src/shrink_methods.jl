@@ -65,13 +65,13 @@ function shrink_until(datum, property::Function;
             # Get a new shrunk/mutated datum. 
             # Reuse last successful one with some probability
             if latest_successful_shrinker != nothing && rand() <= probReuseSuccessful
-                newd = shrink(latest_successful_shrinker, d)
-                #@show ("reuse", newd, d, latest_successful_shrinker)
+                # We can reuse so no need to find new shrinker
             else
                 latest_successful_shrinker = safe_find_shrinker_for(d)
-                newd = shrink(latest_successful_shrinker, d)
-                #@show ("new", newd, d, latest_successful_shrinker)
             end
+
+            muts = mutations(latest_successful_shrinker, d)
+            newd = apply(muts, d)
 
             if property(newd) != orig_property_value
 
@@ -79,7 +79,7 @@ function shrink_until(datum, property::Function;
                 numretries += 1
                 latest_successful_shrinker = nothing
                 if traceSwitches
-                    push!(swtrace, (d, newd))
+                    push!(swtrace, (d, newd, muts))
                 end
 
             else
@@ -101,7 +101,7 @@ function shrink_until(datum, property::Function;
 
                     d = newd
 
-                    if traceShrinkers && (length(strace) == 0 || strace[end] != latest_successful_shrinker)
+                    if traceShrinkers
                         push!(trace, latest_successful_shrinker)
                     end
                 end
@@ -110,7 +110,7 @@ function shrink_until(datum, property::Function;
             numretries += 1
         end
     end
-    return d, length_reduction(d, datum), (numtotalretries + numretries), strace, dtrace, swtrace
+    return d, length_reduction(d, datum), (numtotalretries + numretries), strace, dtrace, unique(swtrace)
 end
 
 shrink(datum, property::Function; options...) = shrink_until(datum, property; options...)[1]

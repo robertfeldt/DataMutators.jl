@@ -21,8 +21,8 @@ include("shrink_methods.jl")
 include("size_reduction_analysis.jl")
 
 # Shrinkers and Mutators
-include("array_shrinkers.jl")
-include("number_shrinkers.jl")
+include("array_mutators.jl")
+include("number_mutators.jl")
 include("string_mutators.jl")
 
 # Type switching mutators
